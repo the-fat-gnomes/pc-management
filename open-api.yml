@@ -1,0 +1,43 @@
+openapi: 3.0.1
+info:
+  title: pc-management
+  description: defaultDescription
+  version: '0.1'
+servers:
+  - url: 'http://localhost:8080'
+paths:
+  /create-pc:
+    get:
+      description: Auto generated using Swagger Inspector
+      parameters:
+        - name: name
+          in: query
+          schema:
+            type: string
+          example: bla
+        - name: campaign-id
+          in: query
+          schema:
+            type: string
+          example: 1
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: 'Character created successfully'
+        '400':
+          description: Bad Request
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: 'Missing name or campaign-id parameters'
+        default:
+          description: Auto generated using Swagger Inspector
+      servers:
+        - url: 'http://localhost:8080'
+    servers:
+      - url: 'http://localhost:8080'
