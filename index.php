@@ -4,6 +4,7 @@ use Dotenv\Dotenv;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Factory\AppFactory;
+require 'src/DatabaseManager.php';
 
 require __DIR__ . '/vendor/autoload.php';
 
@@ -21,9 +22,14 @@ $app->addRoutingMiddleware();
 
 $dotenv = Dotenv::create(__DIR__);
 $dotenv->load();
-$dotenv->required('ENV')->notEmpty();
+$dotenv->required(['ENV', 'DB_CONNECTION_STRING'])->notEmpty();
 
-/*
+// In order to use the Mongodb/Client everywhere, it's been made global
+$dbclient = new DatabaseManager();
+global $db;
+$GLOBALS['db']= $dbclient->databaseConnect();
+
+/**
  * Add Error Handling Middleware
  *
  * @param bool $displayErrorDetails -> Should be set to false in production
@@ -41,10 +47,13 @@ elseif (getenv('ENV') == 'prod') {
     $errorMiddleware = $app->addErrorMiddleware(false, false, false);
 }
 
-// Define app routes
 $app->get('/create-pc', function (Request $request, Response $response) {
     $params = $request->getQueryParams();
     if (array_key_exists('name', $params) && array_key_exists('campaign-id', $params) ) {
+        $GLOBALS['db']->dnd->characters->insertOne([
+            'campaignId' => $params['campaign-id'],
+            'name' => $params['name']
+        ]);
         $response->getBody()->write('Character generated successfully');
         return $response->withStatus(200);
     }
@@ -55,5 +64,4 @@ $app->get('/create-pc', function (Request $request, Response $response) {
 }
 );
 
-// Run app
 $app->run();
