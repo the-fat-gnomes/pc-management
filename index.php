@@ -47,21 +47,33 @@ elseif (getenv('ENV') == 'prod') {
     $errorMiddleware = $app->addErrorMiddleware(false, false, false);
 }
 
-$app->get('/create-pc', function (Request $request, Response $response) {
+$app->get('/characters', function (Request $request, Response $response) {
     $params = $request->getQueryParams();
-    if (array_key_exists('name', $params) && array_key_exists('campaign-id', $params) ) {
-        $GLOBALS['db']->dnd->characters->insertOne([
-            'campaignId' => $params['campaign-id'],
-            'name' => $params['name']
+    if (array_key_exists('campaign-id', $params) ) {
+        $characters = $GLOBALS['db']->dnd->characters->find([
+            'campaignId' => $params['campaign-id']
         ]);
-        $response->getBody()->write('Character generated successfully');
-        return $response->withStatus(200);
+        foreach ($characters as $character) {
+            $response->getBody()->write(json_encode($character, JSON_PRETTY_PRINT));
+        }
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
     }
     else {
-        $response->getBody()->write('Missing name or campaign-id parameters');
+        $response->getBody()->write('Missing campaign-id parameter');
         return $response->withStatus(400);
     }
 }
 );
+
+$app->post('/characters', function (Request $request, Response $response) {
+    $request_type = $request->getHeader('CONTENT_TYPE');
+    if($request_type[0] != 'application/json'){
+        $response->getBody()->write('Only application/json accepted');
+        return $response->withStatus(400, 'Invalid Json');
+    }
+    $characters = $request->getBody();
+    $GLOBALS['db']->dnd->characters->insertOne(json_decode($characters, true));
+    return $response->withStatus(200, 'Character Created');
+});
 
 $app->run();
